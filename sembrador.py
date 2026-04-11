@@ -28,7 +28,7 @@ def listar_unidades_windows():
     return unidades
 
 def ejecutar_sembrador():
-    console.print(Panel("[bold cyan]DELTA PROJECT: ENIGMA 256[/bold cyan]\n[white]Fase 1: Sembrador de Entropía[/white]", expand=False))
+    console.print(Panel("[bold cyan]DELTA PROJECT: ENIGMA 256[/bold cyan]\n[white]Fase 1: Sembrador[/white]", expand=False))
     
     usbs = listar_unidades_windows()
     
