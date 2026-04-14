@@ -1,3 +1,6 @@
+#Este codigo detectara las memorias usb conectadas al sistema y creara una llave "key.dlt"
+#El fin de este codigo es crear un cold storage de la llave que creara las maquinas enimga
+
 import os
 import hashlib
 import psutil
