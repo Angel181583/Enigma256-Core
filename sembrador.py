@@ -1,7 +1,3 @@
-#Este codigo detectara las memorias usb conectadas al sistema y creara una llave "key.dlt"
-#El fin de este codigo es crear un cold storage de la llave que creara las maquinas enimga
-
-# Librerias necesarias
 import os
 import hashlib
 import psutil
@@ -12,58 +8,64 @@ from rich.prompt import Prompt
 
 console = Console()
 
-def listar_unidades_windows():
-    unidades = []
-    # psutil detecta las particiones y buscamos las 'removable' para encontrar nuestra usb objetivo
-    for particion in psutil.disk_partitions():
-        if 'removable' in particion.opts:
+def get_usbs():
+    usbs = []
+    # Filtramos solo los discos extraíbles
+    for p in psutil.disk_partitions():
+        if 'removable' in p.opts:
             try:
-                uso = psutil.disk_usage(particion.mountpoint)
-                unidades.append({
-                    "letra": particion.mountpoint,
-                    "total": f"{uso.total / (1024**3):.2f} GB"
+                usage = psutil.disk_usage(p.mountpoint)
+                gb_size = usage.total / (1024**3)
+                usbs.append({
+                    "ruta": p.mountpoint, 
+                    "size": f"{gb_size:.2f} GB"
                 })
-            except:
-                continue
-    return unidades
+            except Exception:
+                pass # Ignoramos si la unidad está vacía o no se deja leer
+    return usbs
 
-def ejecutar_sembrador():
+def main():
     console.print(Panel("[bold cyan]DELTA PROJECT: ENIGMA 256[/bold cyan]\n[white]Fase 1: Sembrador[/white]", expand=False))
     
-    usbs = listar_unidades_windows()
+    usbs = get_usbs()
     
     if not usbs:
-        console.print("[bold red]❌ ERROR: No se detectó ninguna USB conectada.[/bold red]")
+        console.print("[bold red]❌ Error: Conecta una USB primero.[/bold red]")
         return
 
-    # Crear tabla de seleccion ayuda visual
-    tabla = Table(title="Dispositivos Extraíbles")
+    # Render de la tabla
+    tabla = Table(title="Dispositivos detectados")
     tabla.add_column("ID", style="cyan", justify="center")
-    tabla.add_column("Unidad", style="magenta")
-    tabla.add_column("Capacidad", style="green")
+    tabla.add_column("Ruta", style="magenta")
+    tabla.add_column("Tamaño", style="green")
 
-    for idx, usb in enumerate(usbs):
-        tabla.add_row(str(idx), usb['letra'], usb['total'])
+    for i, usb in enumerate(usbs):
+        tabla.add_row(str(i), usb['ruta'], usb['size'])
 
     console.print(tabla)
 
-    # Selección de usuario
-    seleccion = Prompt.ask("Selecciona el [bold cyan]ID[/bold cyan] de la USB para la llave", choices=[str(i) for i in range(len(usbs))])
-    ruta_destino = usbs[int(seleccion)]['letra']
-    
-    with console.status("[bold yellow]Cosechando ruido térmico del sistema..."):
-        # Generar 2048 bytes de entropia deacuerdo con el sistema
-        ruido = os.urandom(2048)
-        # Refinar a llave maestra SHA-256 para crear el archivo hash
-        llave_maestra = hashlib.sha256(ruido).digest()
-        # Ruta final del archivo
-        archivo_llave = os.path.join(ruta_destino, "key.dlt")
-        
-        with open(archivo_llave, "wb") as f:
-            f.write(llave_maestra)
+    # Input del usuario
+    try:
+        opcion = int(Prompt.ask("Selecciona el [bold cyan]ID[/bold cyan] destino", choices=[str(i) for i in range(len(usbs))]))
+    except ValueError:
+        return
 
-    console.print(f"\n[bold green]✔ PROCESO EXITOSO:[/bold green] Llave plantada en [white]{archivo_llave}[/white]")
-    console.print("[dim]Recuerde: Si pierde este archivo, los mundos cifrados serán inaccesibles.[/dim]")
+    destino = usbs[opcion]['ruta']
+    
+    with console.status("[bold yellow]Generando entropía térmica..."):
+        # 2KB de ruido al azar
+        ruido = os.urandom(2048)
+        key = hashlib.sha256(ruido).digest()
+        
+        key_path = os.path.join(destino, "key.dlt")
+        
+        try:
+            with open(key_path, "wb") as f:
+                f.write(key)
+            console.print(f"\n[bold green]✔ LISTO:[/bold green] Llave guardada en [white]{key_path}[/white]")
+            console.print("[dim]Ojo: Sin este archivo no hay vuelta atrás para los entornos cifrados.[/dim]")
+        except Exception as e:
+            console.print(f"\n[bold red]❌ Error al intentar escribir en la USB:[/bold red] {e}")
 
 if __name__ == "__main__":
-    ejecutar_sembrador()
+    main()
