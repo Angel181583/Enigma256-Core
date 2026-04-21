@@ -2,11 +2,7 @@ import os
 import psutil
 
 class Enigma256:
-    """
-    Simulador de sistema criptográfico Enigma 256.
-    Se encarga de buscar una llave física en unidades externas 
-    y configurar los rotores mediante un algoritmo de barajado.
-    """
+
     
     def __init__(self, ruta_llave=None):
         self.rotores = []
@@ -21,9 +17,9 @@ class Enigma256:
         self._configurar_rotores()
 
     def _buscar_llave_en_dispositivos(self):
-        """
-        Escanea las unidades de almacenamiento conectadas buscando el archivo 'key.dlt'.
-        """
+        
+        #Escanea las unidades de almacenamiento conectadas buscando el archivo 'key.dlt'.
+        
         rutas_comunes = ['/media', '/run/media']
         
         for particion in psutil.disk_partitions(all=False):
@@ -54,10 +50,10 @@ class Enigma256:
             return list(f.read())
 
     def _configurar_rotores(self):
-        """
-        Inicializa y baraja los 8 rotores usando un algoritmo Fisher-Yates 
-        basado en los fragmentos de la llave cargada.
-        """
+    
+        # Inicializa y baraja los 8 rotores usando un algoritmo Fisher-Yates 
+        # basado en los fragmentos de la llave cargada.
+    
         for n in range(8):
             rotor = list(range(256))
             # Tomamos un segmento de la llave para generar la semilla
